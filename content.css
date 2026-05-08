@@ -25,6 +25,7 @@
   border: 1px solid currentColor;
   background: transparent;
   color: inherit;
+  opacity: 0.85;
   width: 28px;
   height: 28px;
   border-radius: 14px;

@@ -49,7 +49,7 @@
 
     const focusTarget = row.querySelector('button, a, [role="option"], [tabindex]') || row;
     focusTarget.focus?.();
-    // Fallback: simulate Shift+Delete, which YouTube may handle to remove a suggestion/history item.
+    // Best-effort fallback: simulate Shift+Delete, which some YouTube UI variants handle for suggestion removal.
     focusTarget.dispatchEvent(new KeyboardEvent('keydown', {
       key: 'Delete',
       code: 'Delete',
