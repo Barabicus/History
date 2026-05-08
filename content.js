@@ -1,199 +1,106 @@
 (() => {
-  const rowSelectors = [
-    'ytd-searchbox-spt ytd-item-section-renderer ytd-searchbox-spt-item-renderer',
-    'ytd-searchbox ytd-item-section-renderer ytd-searchbox-spt-item-renderer',
-    '[role="listbox"] [role="option"]',
-    'ul[role="listbox"] li'
-  ];
-
-  const removeControlSelectors = [
-    'button[aria-label*="Remove"]',
-    'tp-yt-paper-icon-button[aria-label*="Remove"]',
-    '[title*="Remove"]',
-    '[aria-label*="Delete"]'
-  ];
-
   const processedAttr = 'data-yt-history-x-injected';
-  const searchControlsAttr = 'data-yt-history-search-controls';
-  // Short delay lets YouTube update its own UI state before we remove the row locally.
-  const removeDelayMs = 250;
+  // Short delay lets YouTube update its own UI state before we remove the item locally.
+  const removeDelayMs = 300;
+  // Delay to allow YouTube's popup menu to finish rendering before we query its items.
+  const menuOpenDelayMs = 150;
   const observerConfig = { childList: true, subtree: true };
 
-  const queryText = (element) => (element?.textContent || '').replace(/\s+/g, ' ').trim();
-  const normalizeQuery = (text) => text.replace(/\s+/g, ' ').trim().toLowerCase();
-  const rowSearchText = (row) => normalizeQuery(
-    queryText(row.querySelector('span, yt-formatted-string') || row)
-      .replace(/[✕x]\s*$/i, '')
-  );
+  const isHistoryPage = () => location.pathname.startsWith('/feed/history');
 
-  const getSuggestionRows = () => {
-    const rows = new Set();
-    rowSelectors.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((element) => {
-        if (queryText(element)) {
-          rows.add(element);
-        }
-      });
-    });
-    return [...rows];
-  };
+  const getUnprocessedVideoItems = () =>
+    [...document.querySelectorAll('ytd-video-renderer')].filter(
+      (el) => !el.hasAttribute(processedAttr)
+    );
 
-  const triggerBuiltInRemove = (row) => {
-    for (const selector of removeControlSelectors) {
-      const control = row.querySelector(selector);
-      if (control) {
-        control.click();
-        return true;
-      }
+  // Opens the action menu for a video item and clicks "Remove from Watch History".
+  const clickRemoveFromHistory = async (item) => {
+    // Some UI variants expose a direct remove button without needing the menu.
+    const directRemove = item.querySelector(
+      'button[aria-label*="Remove from Watch History"], button[aria-label*="Remove from history"]'
+    );
+    if (directRemove) {
+      directRemove.click();
+      return;
     }
 
-    const focusTarget = row.querySelector('button, a, [role="option"], [tabindex]') || row;
-    focusTarget.focus?.();
-    // Best-effort fallback: simulate Shift+Delete, which some YouTube UI variants handle for suggestion removal.
-    focusTarget.dispatchEvent(new KeyboardEvent('keydown', {
-      key: 'Delete',
-      code: 'Delete',
-      shiftKey: true,
-      bubbles: true,
-      cancelable: true
-    }));
+    // Open the 3-dot action menu.
+    const menuButton = item.querySelector('#menu button, ytd-menu-renderer button');
+    if (!menuButton) {
+      return;
+    }
 
-    return false;
+    menuButton.click();
+
+    // Wait for the popup to render before searching for the menu item.
+    await new Promise((resolve) => setTimeout(resolve, menuOpenDelayMs));
+
+    // Look inside the open popup first, then fall back to a global search.
+    const candidates = [
+      ...document.querySelectorAll(
+        'ytd-menu-popup-renderer ytd-menu-service-item-renderer, ' +
+        'ytd-menu-popup-renderer tp-yt-paper-item, ' +
+        'tp-yt-paper-listbox ytd-menu-service-item-renderer, ' +
+        'tp-yt-paper-listbox tp-yt-paper-item'
+      ),
+    ];
+
+    for (const candidate of candidates) {
+      const text = candidate.textContent.trim().toLowerCase();
+      if (text.includes('remove') && text.includes('history')) {
+        candidate.click();
+        return;
+      }
+    }
   };
 
-  const scheduleRowRemoval = (row) => {
+  const scheduleItemRemoval = (item) => {
     setTimeout(() => {
-      if (row.isConnected) {
-        row.remove();
+      if (item.isConnected) {
+        item.remove();
       }
     }, removeDelayMs);
   };
 
-  const addInlineRemoveButton = (row) => {
-    if (row.getAttribute(processedAttr) === 'true') {
-      return;
-    }
-
-    row.setAttribute(processedAttr, 'true');
+  const addRemoveButton = (item) => {
+    item.setAttribute(processedAttr, 'true');
 
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'yt-history-remove-button';
-    button.title = 'Remove this search from history';
-    button.setAttribute('aria-label', 'Remove this search from history');
+    button.title = 'Remove from Watch History';
+    button.setAttribute('aria-label', 'Remove from Watch History');
     button.textContent = '✕';
 
-    button.addEventListener('click', (event) => {
+    button.addEventListener('click', async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      triggerBuiltInRemove(row);
-      scheduleRowRemoval(row);
+      try {
+        await clickRemoveFromHistory(item);
+      } catch (err) {
+        console.error('[yt-history] Failed to remove item from Watch History:', err);
+      }
+      scheduleItemRemoval(item);
     });
 
-    row.appendChild(button);
-  };
-
-  const submitCurrentSearch = (input) => {
-    const value = input.value.trim();
-    if (!value) {
-      return;
+    // Overlay the button on the video thumbnail.
+    const thumbnail = item.querySelector('ytd-thumbnail, #thumbnail');
+    if (thumbnail) {
+      thumbnail.appendChild(button);
+    } else {
+      item.appendChild(button);
     }
-
-    const form = input.closest('form');
-    if (!form) {
-      return;
-    }
-
-    const searchButton = form.querySelector('#search-icon-legacy button, button#search-icon-legacy, button[aria-label*="Search"]');
-    if (searchButton) {
-      searchButton.click();
-      return;
-    }
-
-    if (typeof form.requestSubmit === 'function') {
-      form.requestSubmit();
-      return;
-    }
-
-    form.submit();
-  };
-
-  const removeCurrentSearch = (input) => {
-    const target = normalizeQuery(input.value);
-    if (!target) {
-      return;
-    }
-
-    const rows = getSuggestionRows().filter((row) => rowSearchText(row) === target);
-    rows.forEach((row) => {
-      triggerBuiltInRemove(row);
-      scheduleRowRemoval(row);
-    });
-  };
-
-  const injectSearchControls = () => {
-    const input = document.querySelector('input#search');
-    if (!input) {
-      return;
-    }
-
-    const container = input.closest('#container.ytd-searchbox') || input.closest('form') || input.parentElement;
-    if (!container || container.querySelector(`[${searchControlsAttr}="true"]`)) {
-      return;
-    }
-
-    const controls = document.createElement('div');
-    controls.className = 'yt-history-search-controls';
-    controls.setAttribute(searchControlsAttr, 'true');
-
-    const addButton = document.createElement('button');
-    addButton.type = 'button';
-    addButton.className = 'yt-history-action-button';
-    addButton.textContent = '+';
-    addButton.title = 'Add current query to history by running the search';
-    addButton.setAttribute('aria-label', 'Add current query to history');
-    addButton.addEventListener('click', () => submitCurrentSearch(input));
-
-    const removeButton = document.createElement('button');
-    removeButton.type = 'button';
-    removeButton.className = 'yt-history-action-button';
-    removeButton.textContent = '✕';
-    removeButton.title = 'Remove matching query from visible search history suggestions';
-    removeButton.setAttribute('aria-label', 'Remove current query from search history suggestions');
-    removeButton.addEventListener('click', () => removeCurrentSearch(input));
-
-    controls.appendChild(addButton);
-    controls.appendChild(removeButton);
-    container.appendChild(controls);
   };
 
   const apply = () => {
-    injectSearchControls();
-    getSuggestionRows().forEach(addInlineRemoveButton);
+    if (!isHistoryPage()) {
+      return;
+    }
+    getUnprocessedVideoItems().forEach(addRemoveButton);
   };
 
   let applyQueued = false;
-  let observerTarget = null;
   let observer = null;
-
-  const findObserverTarget = () => (
-    document.querySelector('ytd-searchbox')
-    || document.querySelector('#searchform')
-    || document.querySelector('form[role="search"]')
-    || document.querySelector('ytd-masthead')
-    || document.querySelector('[role="listbox"]')
-    || document.body
-  );
-
-  const updateObserverTarget = () => {
-    const nextTarget = findObserverTarget();
-    if (!observer || !nextTarget || nextTarget === observerTarget) {
-      return;
-    }
-    observer.disconnect();
-    observer.observe(nextTarget, observerConfig);
-    observerTarget = nextTarget;
-  };
 
   const scheduleApply = () => {
     if (applyQueued) {
@@ -202,13 +109,15 @@
     applyQueued = true;
     requestAnimationFrame(() => {
       applyQueued = false;
-      updateObserverTarget();
       apply();
     });
   };
 
+  // Re-run when YouTube performs a SPA navigation (e.g. user navigates to /feed/history).
+  document.addEventListener('yt-navigate-finish', scheduleApply);
+
   observer = new MutationObserver(scheduleApply);
-  updateObserverTarget();
+  observer.observe(document.body, observerConfig);
 
   apply();
 })();
