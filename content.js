@@ -15,6 +15,7 @@
 
   const processedAttr = 'data-yt-history-x-injected';
   const searchControlsAttr = 'data-yt-history-search-controls';
+  // Short delay lets YouTube update its own UI state before we remove the row locally.
   const removeDelayMs = 250;
   const observerConfig = { childList: true, subtree: true };
 
@@ -48,7 +49,7 @@
 
     const focusTarget = row.querySelector('button, a, [role="option"], [tabindex]') || row;
     focusTarget.focus?.();
-    // Fallback when YouTube does not expose a direct remove control in the row.
+    // Fallback: simulate Shift+Delete, which YouTube may handle to remove a suggestion/history item.
     focusTarget.dispatchEvent(new KeyboardEvent('keydown', {
       key: 'Delete',
       code: 'Delete',
@@ -58,6 +59,14 @@
     }));
 
     return false;
+  };
+
+  const scheduleRowRemoval = (row) => {
+    setTimeout(() => {
+      if (row.isConnected) {
+        row.remove();
+      }
+    }, removeDelayMs);
   };
 
   const addInlineRemoveButton = (row) => {
@@ -78,11 +87,7 @@
       event.preventDefault();
       event.stopPropagation();
       triggerBuiltInRemove(row);
-      setTimeout(() => {
-        if (row.isConnected) {
-          row.remove();
-        }
-      }, removeDelayMs);
+      scheduleRowRemoval(row);
     });
 
     row.appendChild(button);
@@ -122,11 +127,7 @@
     const rows = getSuggestionRows().filter((row) => rowSearchText(row) === target);
     rows.forEach((row) => {
       triggerBuiltInRemove(row);
-      setTimeout(() => {
-        if (row.isConnected) {
-          row.remove();
-        }
-      }, removeDelayMs);
+      scheduleRowRemoval(row);
     });
   };
 
