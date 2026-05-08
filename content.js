@@ -22,7 +22,6 @@
   const normalizeQuery = (text) => text.replace(/\s+/g, ' ').trim().toLowerCase();
   const rowSearchText = (row) => normalizeQuery(
     queryText(row.querySelector('span, yt-formatted-string') || row)
-      .replace(/\bremove\b/gi, '')
       .replace(/[✕x]\s*$/i, '')
   );
 
@@ -49,6 +48,7 @@
 
     const focusTarget = row.querySelector('button, a, [role="option"], [tabindex]') || row;
     focusTarget.focus?.();
+    // Fallback when YouTube does not expose a direct remove control in the row.
     focusTarget.dispatchEvent(new KeyboardEvent('keydown', {
       key: 'Delete',
       code: 'Delete',
