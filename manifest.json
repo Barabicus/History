@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Search History Buttons",
-  "description": "Adds quick add/remove controls for YouTube search history, including inline ✕ buttons.",
+  "description": "Adds a ✕ remove button on each video in the YouTube Watch History feed (/feed/history) to quickly remove individual videos from your watch history.",
   "version": "1.0.0",
   "host_permissions": ["https://www.youtube.com/*"],
   "content_scripts": [
