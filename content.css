@@ -1,0 +1,35 @@
+.yt-history-remove-button {
+  margin-left: 8px;
+  border: none;
+  background: transparent;
+  color: #ff4e45;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.yt-history-remove-button:hover {
+  opacity: 1;
+}
+
+.yt-history-search-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.yt-history-action-button {
+  border: 1px solid #3f3f3f;
+  background: #202020;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.yt-history-action-button:hover {
+  border-color: #6d6d6d;
+}
