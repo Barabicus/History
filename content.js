@@ -15,8 +15,16 @@
 
   const processedAttr = 'data-yt-history-x-injected';
   const searchControlsAttr = 'data-yt-history-search-controls';
+  const removeDelayMs = 250;
+  const observerConfig = { childList: true, subtree: true };
 
   const queryText = (element) => (element?.textContent || '').replace(/\s+/g, ' ').trim();
+  const normalizeQuery = (text) => text.replace(/\s+/g, ' ').trim().toLowerCase();
+  const rowSearchText = (row) => normalizeQuery(
+    queryText(row.querySelector('span, yt-formatted-string') || row)
+      .replace(/\bremove\b/gi, '')
+      .replace(/[✕x]\s*$/i, '')
+  );
 
   const getSuggestionRows = () => {
     const rows = new Set();
@@ -74,7 +82,7 @@
         if (row.isConnected) {
           row.remove();
         }
-      }, 250);
+      }, removeDelayMs);
     });
 
     row.appendChild(button);
@@ -106,19 +114,19 @@
   };
 
   const removeCurrentSearch = (input) => {
-    const target = input.value.trim().toLowerCase();
+    const target = normalizeQuery(input.value);
     if (!target) {
       return;
     }
 
-    const rows = getSuggestionRows().filter((row) => queryText(row).toLowerCase().includes(target));
+    const rows = getSuggestionRows().filter((row) => rowSearchText(row) === target);
     rows.forEach((row) => {
       triggerBuiltInRemove(row);
       setTimeout(() => {
         if (row.isConnected) {
           row.remove();
         }
-      }, 250);
+      }, removeDelayMs);
     });
   };
 
@@ -164,6 +172,28 @@
   };
 
   let applyQueued = false;
+  let observerTarget = null;
+  let observer = null;
+
+  const findObserverTarget = () => (
+    document.querySelector('ytd-searchbox')
+    || document.querySelector('#searchform')
+    || document.querySelector('form[role="search"]')
+    || document.querySelector('ytd-masthead')
+    || document.querySelector('[role="listbox"]')
+    || document.body
+  );
+
+  const updateObserverTarget = () => {
+    const nextTarget = findObserverTarget();
+    if (!observer || !nextTarget || nextTarget === observerTarget) {
+      return;
+    }
+    observer.disconnect();
+    observer.observe(nextTarget, observerConfig);
+    observerTarget = nextTarget;
+  };
+
   const scheduleApply = () => {
     if (applyQueued) {
       return;
@@ -171,12 +201,13 @@
     applyQueued = true;
     requestAnimationFrame(() => {
       applyQueued = false;
+      updateObserverTarget();
       apply();
     });
   };
 
-  const observer = new MutationObserver(scheduleApply);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  observer = new MutationObserver(scheduleApply);
+  updateObserverTarget();
 
   apply();
 })();
