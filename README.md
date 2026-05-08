@@ -14,6 +14,6 @@ Chrome extension that adds quick buttons on YouTube to help manage search histor
 1. Open `chrome://extensions`.
 2. Turn on **Developer mode**.
 3. Click **Load unpacked**.
-4. Select this folder: `/home/runner/work/History/History`.
+4. Select the repository root folder (the folder containing `manifest.json`).
 
 Then open YouTube and click in the search box to see suggestion history controls.

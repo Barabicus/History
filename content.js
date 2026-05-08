@@ -163,7 +163,19 @@
     getSuggestionRows().forEach(addInlineRemoveButton);
   };
 
-  const observer = new MutationObserver(apply);
+  let applyQueued = false;
+  const scheduleApply = () => {
+    if (applyQueued) {
+      return;
+    }
+    applyQueued = true;
+    requestAnimationFrame(() => {
+      applyQueued = false;
+      apply();
+    });
+  };
+
+  const observer = new MutationObserver(scheduleApply);
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
   apply();

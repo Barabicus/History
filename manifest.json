@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Search History Buttons",
-  "description": "Adds quick add/remove controls for YouTube search history, including inline X buttons.",
+  "description": "Adds quick add/remove controls for YouTube search history, including inline ✕ buttons.",
   "version": "1.0.0",
   "content_scripts": [
     {
