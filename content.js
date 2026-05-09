@@ -85,13 +85,10 @@
       scheduleItemRemoval(item);
     });
 
-    // Overlay the button on the video thumbnail.
-    const thumbnail = item.querySelector(
-      'ytd-thumbnail, a#thumbnail, a.ytd-thumbnail, #thumbnail'
-    );
-    if (thumbnail) {
-      thumbnail.style.position = 'relative';
-      thumbnail.appendChild(button);
+    // Place the button beside the 3-dot menu icon.
+    const menuRenderer = item.querySelector('ytd-menu-renderer, #menu');
+    if (menuRenderer && menuRenderer.parentNode) {
+      menuRenderer.parentNode.insertBefore(button, menuRenderer.nextSibling);
     } else {
       item.appendChild(button);
     }
