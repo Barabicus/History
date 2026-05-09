@@ -9,9 +9,11 @@
   const isHistoryPage = () => location.pathname.startsWith('/feed/history');
 
   const getUnprocessedVideoItems = () =>
-    [...document.querySelectorAll('ytd-video-renderer')].filter(
-      (el) => !el.hasAttribute(processedAttr)
-    );
+    [
+      ...document.querySelectorAll(
+        'ytd-video-renderer, ytd-rich-item-renderer, ytd-compact-video-renderer'
+      ),
+    ].filter((el) => !el.hasAttribute(processedAttr));
 
   // Opens the action menu for a video item and clicks "Remove from Watch History".
   const clickRemoveFromHistory = async (item) => {
@@ -84,8 +86,11 @@
     });
 
     // Overlay the button on the video thumbnail.
-    const thumbnail = item.querySelector('ytd-thumbnail, #thumbnail');
+    const thumbnail = item.querySelector(
+      'ytd-thumbnail, a#thumbnail, a.ytd-thumbnail, #thumbnail'
+    );
     if (thumbnail) {
+      thumbnail.style.position = 'relative';
       thumbnail.appendChild(button);
     } else {
       item.appendChild(button);

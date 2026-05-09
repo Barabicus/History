@@ -1,4 +1,7 @@
-ytd-thumbnail {
+ytd-thumbnail,
+ytd-video-renderer ytd-thumbnail,
+ytd-rich-item-renderer ytd-thumbnail,
+ytd-compact-video-renderer ytd-thumbnail {
   position: relative;
 }
 
@@ -6,7 +9,7 @@ ytd-thumbnail {
   position: absolute;
   top: 4px;
   right: 4px;
-  z-index: 10;
+  z-index: 9999;
   width: 28px;
   height: 28px;
   border: none;
@@ -16,20 +19,18 @@ ytd-thumbnail {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s;
+  opacity: 1;
+  transition: opacity 0.15s, background 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
   padding: 0;
+  pointer-events: auto;
 }
 
-ytd-video-renderer:hover .yt-history-remove-button,
+.yt-history-remove-button:hover,
 .yt-history-remove-button:focus {
   opacity: 1;
-}
-
-.yt-history-remove-button:hover {
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(200, 0, 0, 0.9);
 }
