@@ -93,9 +93,10 @@
       scheduleItemRemoval(item);
     });
 
-    // Insert the button immediately after the 3-dot menu renderer so it is
-    // always consistently placed regardless of the video title length.
-    menuRenderer.insertAdjacentElement('afterend', button);
+    // Append the button directly to the item so it is never clipped by a
+    // nested overflow:hidden container. CSS absolute-positions it relative
+    // to the item element itself.
+    item.appendChild(button);
   };
 
   const apply = () => {
