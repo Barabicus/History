@@ -65,6 +65,14 @@
   };
 
   const addRemoveButton = (item) => {
+    // Only proceed once the 3-dot menu is present in the DOM.
+    // If it isn't ready yet, skip without marking as processed so the observer
+    // will retry when the inner DOM settles.
+    const menuRenderer = item.querySelector('ytd-menu-renderer, #menu');
+    if (!menuRenderer) {
+      return;
+    }
+
     item.setAttribute(processedAttr, 'true');
 
     const button = document.createElement('button');
@@ -85,13 +93,9 @@
       scheduleItemRemoval(item);
     });
 
-    // Place the button beside the 3-dot menu icon.
-    const menuRenderer = item.querySelector('ytd-menu-renderer, #menu');
-    if (menuRenderer && menuRenderer.parentNode) {
-      menuRenderer.parentNode.insertBefore(button, menuRenderer.nextSibling);
-    } else {
-      item.appendChild(button);
-    }
+    // Insert the button immediately after the 3-dot menu renderer so it is
+    // always consistently placed regardless of the video title length.
+    menuRenderer.insertAdjacentElement('afterend', button);
   };
 
   const apply = () => {

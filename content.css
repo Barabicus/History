@@ -2,14 +2,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   margin-left: 8px;
   border: none;
   border-radius: 50%;
   background: #cc0000;
   color: #fff;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   vertical-align: middle;
@@ -17,6 +18,7 @@
   padding: 0;
   pointer-events: auto;
   flex-shrink: 0;
+  align-self: center;
   transition: background 0.15s, transform 0.1s;
   z-index: 9999;
 }
