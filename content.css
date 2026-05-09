@@ -2,26 +2,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-left: 4px;
+  width: 48px;
+  height: 48px;
+  margin-left: 8px;
   border: none;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.7);
+  background: #cc0000;
   color: #fff;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   cursor: pointer;
   vertical-align: middle;
   line-height: 1;
   padding: 0;
   pointer-events: auto;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
   z-index: 9999;
 }
 
 .yt-history-remove-button:hover,
 .yt-history-remove-button:focus {
-  background: rgba(200, 0, 0, 0.9);
+  background: #ff0000;
+  transform: scale(1.1);
 }
